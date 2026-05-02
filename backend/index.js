@@ -14,8 +14,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Conexión a la base de datos MySQL en Railway usando URL
-const db = mysql.createPool(process.env.DB_URL + '?ssl={"rejectUnauthorized":false}');
+// Conexión a la base de datos MySQL en Railway usando pool
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  ssl: { rejectUnauthorized: false },
+  waitForConnections: true,
+  connectionLimit: 10,
+  connectTimeout: 30000
+});
 
 // Verificamos que la conexión funcione
 db.getConnection((err, connection) => {
@@ -27,12 +37,29 @@ db.getConnection((err, connection) => {
   connection.release();
 });
 
+// Importamos las rutas y les pasamos la conexión a la base de datos
+const categoriasRouter = require('./routes/categorias')(db);
+const productosRouter = require('./routes/productos')(db);
+const agendamientosRouter = require('./routes/agendamientos')(db);
+
+// Registramos las rutas en el servidor
+// Cada ruta tiene su propio prefijo
+app.use('/categorias', categoriasRouter);
+app.use('/productos', productosRouter);
+app.use('/agendamientos', agendamientosRouter);
+
 // Ruta principal
 app.get('/', (req, res) => {
   res.json({
     mensaje: 'Servidor de Icolgas funcionando correctamente',
     version: '1.0.0',
-    empresa: 'Icolgas — Conectamos Futuro...'
+    empresa: 'Icolgas — Conectamos Futuro...',
+    rutas: {
+      categorias: '/categorias',
+      productos: '/productos',
+      agendamientos: '/agendamientos',
+      test_db: '/db-test'
+    }
   });
 });
 
