@@ -41,12 +41,15 @@ db.getConnection((err, connection) => {
 const categoriasRouter = require('./routes/categorias')(db);
 const productosRouter = require('./routes/productos')(db);
 const agendamientosRouter = require('./routes/agendamientos')(db);
+const pedidosRouter = require('./routes/pedidos')(db);
+const tiposerviciosRouter = require('./routes/tiposervicios')(db);
 
 // Registramos las rutas en el servidor
-// Cada ruta tiene su propio prefijo
 app.use('/categorias', categoriasRouter);
 app.use('/productos', productosRouter);
 app.use('/agendamientos', agendamientosRouter);
+app.use('/pedidos', pedidosRouter);
+app.use('/tiposervicios', tiposerviciosRouter);
 
 // Ruta principal
 app.get('/', (req, res) => {
@@ -58,6 +61,8 @@ app.get('/', (req, res) => {
       categorias: '/categorias',
       productos: '/productos',
       agendamientos: '/agendamientos',
+      pedidos: '/pedidos',
+      tiposervicios: '/tiposervicios',
       test_db: '/db-test'
     }
   });
