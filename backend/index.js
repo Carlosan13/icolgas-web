@@ -1,20 +1,18 @@
-// Importamos las librerías que instalamos
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const mysql = require('mysql2');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 
-// Cargamos las variables del archivo .env
 dotenv.config();
 
-// Creamos la aplicación Express
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Conexión a la base de datos MySQL en Railway usando pool
+// Conexión a la base de datos
 const db = mysql.createPool({
   host: process.env.DB_HOST,
   port: parseInt(process.env.DB_PORT),
@@ -27,7 +25,6 @@ const db = mysql.createPool({
   connectTimeout: 30000
 });
 
-// Verificamos que la conexión funcione
 db.getConnection((err, connection) => {
   if (err) {
     console.error('Error conectando a la base de datos:', err.message);
@@ -37,14 +34,39 @@ db.getConnection((err, connection) => {
   connection.release();
 });
 
-// Importamos las rutas y les pasamos la conexión a la base de datos
+// Configuración de Swagger
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'API Icolgas',
+      version: '1.0.0',
+      description: 'Documentación de la API del sistema web de Icolgas - Comercio electrónico y agendamiento de servicios técnicos',
+      contact: {
+        name: 'Carlos Andrés Betancur Urueña',
+        email: 'icolgas@hotmail.com'
+      }
+    },
+    servers: [
+      {
+        url: 'http://localhost:3000',
+        description: 'Servidor local de desarrollo'
+      }
+    ]
+  },
+  apis: ['./routes/*.js']
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Rutas
 const categoriasRouter = require('./routes/categorias')(db);
 const productosRouter = require('./routes/productos')(db);
 const agendamientosRouter = require('./routes/agendamientos')(db);
 const pedidosRouter = require('./routes/pedidos')(db);
 const tiposerviciosRouter = require('./routes/tiposervicios')(db);
 
-// Registramos las rutas en el servidor
 app.use('/categorias', categoriasRouter);
 app.use('/productos', productosRouter);
 app.use('/agendamientos', agendamientosRouter);
@@ -56,19 +78,18 @@ app.get('/', (req, res) => {
   res.json({
     mensaje: 'Servidor de Icolgas funcionando correctamente',
     version: '1.0.0',
-    empresa: 'Icolgas — Conectamos Futuro...',
+    empresa: 'Icolgas - Conectamos Futuro...',
     rutas: {
       categorias: '/categorias',
       productos: '/productos',
       agendamientos: '/agendamientos',
       pedidos: '/pedidos',
       tiposervicios: '/tiposervicios',
-      test_db: '/db-test'
+      swagger: '/api-docs'
     }
   });
 });
 
-// Ruta para verificar la conexión a la base de datos
 app.get('/db-test', (req, res) => {
   db.query('SELECT 1 + 1 AS resultado', (err, results) => {
     if (err) {
@@ -81,8 +102,8 @@ app.get('/db-test', (req, res) => {
   });
 });
 
-// Iniciamos el servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor Icolgas corriendo en http://localhost:${PORT}`);
+  console.log(`Swagger disponible en http://localhost:${PORT}/api-docs`);
 });

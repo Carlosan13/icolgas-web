@@ -3,8 +3,18 @@ const router = express.Router();
 
 module.exports = (db) => {
 
-  // GET /tiposervicios — obtener todos los tipos de servicio
-  // Esta ruta la usa el formulario de agendamiento para mostrar las opciones
+  /**
+   * @swagger
+   * /tiposervicios:
+   *   get:
+   *     summary: Obtener todos los tipos de servicio
+   *     tags: [Tipos de Servicio]
+   *     responses:
+   *       200:
+   *         description: Lista de tipos de servicio disponibles
+   *       500:
+   *         description: Error del servidor
+   */
   router.get('/', (req, res) => {
     db.query('SELECT * FROM TIPO_SERVICIO', (err, results) => {
       if (err) {
@@ -14,7 +24,27 @@ module.exports = (db) => {
     });
   });
 
-  // GET /tiposervicios/:id — obtener un tipo de servicio por ID
+  /**
+   * @swagger
+   * /tiposervicios/{id}:
+   *   get:
+   *     summary: Obtener un tipo de servicio por ID
+   *     tags: [Tipos de Servicio]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID del tipo de servicio
+   *     responses:
+   *       200:
+   *         description: Tipo de servicio encontrado
+   *       404:
+   *         description: Tipo de servicio no encontrado
+   *       500:
+   *         description: Error del servidor
+   */
   router.get('/:id', (req, res) => {
     const { id } = req.params;
     db.query('SELECT * FROM TIPO_SERVICIO WHERE id_tipo = ?', [id], (err, results) => {

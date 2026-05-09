@@ -1,12 +1,20 @@
-// Importamos Express y creamos el router
 const express = require('express');
 const router = express.Router();
 
-// Esta función recibe la conexión a la base de datos
 module.exports = (db) => {
 
-  // GET /productos — obtener todos los productos activos
-  // Esta ruta la usa la tienda virtual para mostrar el catálogo
+  /**
+   * @swagger
+   * /productos:
+   *   get:
+   *     summary: Obtener todos los productos activos
+   *     tags: [Productos]
+   *     responses:
+   *       200:
+   *         description: Lista de productos activos con su categoría
+   *       500:
+   *         description: Error del servidor
+   */
   router.get('/', (req, res) => {
     const query = `
       SELECT p.*, c.nombre AS categoria_nombre 
@@ -22,7 +30,27 @@ module.exports = (db) => {
     });
   });
 
-  // GET /productos/:id — obtener un producto por su ID
+  /**
+   * @swagger
+   * /productos/{id}:
+   *   get:
+   *     summary: Obtener un producto por ID
+   *     tags: [Productos]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID del producto
+   *     responses:
+   *       200:
+   *         description: Producto encontrado
+   *       404:
+   *         description: Producto no encontrado
+   *       500:
+   *         description: Error del servidor
+   */
   router.get('/:id', (req, res) => {
     const { id } = req.params;
     const query = `
@@ -42,8 +70,25 @@ module.exports = (db) => {
     });
   });
 
-  // GET /productos/categoria/:id — obtener productos por categoría
-  // Esta ruta la usa el filtro de la tienda
+  /**
+   * @swagger
+   * /productos/categoria/{id}:
+   *   get:
+   *     summary: Obtener productos por categoría
+   *     tags: [Productos]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID de la categoría
+   *     responses:
+   *       200:
+   *         description: Lista de productos de esa categoría
+   *       500:
+   *         description: Error del servidor
+   */
   router.get('/categoria/:id', (req, res) => {
     const { id } = req.params;
     const query = `
@@ -60,7 +105,53 @@ module.exports = (db) => {
     });
   });
 
-  // POST /productos — crear un nuevo producto (solo admin)
+  /**
+   * @swagger
+   * /productos:
+   *   post:
+   *     summary: Crear un nuevo producto (solo admin)
+   *     tags: [Productos]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - nombre
+   *               - referencia
+   *               - precio
+   *               - id_categoria
+   *             properties:
+   *               nombre:
+   *                 type: string
+   *                 example: Válvula de gas 1/2
+   *               referencia:
+   *                 type: string
+   *                 example: VG-001
+   *               descripcion:
+   *                 type: string
+   *                 example: Válvula de cierre rápido para instalaciones de gas
+   *               precio:
+   *                 type: number
+   *                 example: 45000
+   *               stock:
+   *                 type: integer
+   *                 example: 50
+   *               imagen_url:
+   *                 type: string
+   *                 example: https://ejemplo.com/imagen.jpg
+   *               id_categoria:
+   *                 type: integer
+   *                 example: 1
+   *     responses:
+   *       201:
+   *         description: Producto creado exitosamente
+   *       400:
+   *         description: Campos obligatorios faltantes
+   *       500:
+   *         description: Error del servidor
+   */
   router.post('/', (req, res) => {
     const { nombre, referencia, descripcion, precio, stock, imagen_url, id_categoria } = req.body;
     if (!nombre || !referencia || !precio || !id_categoria) {
@@ -78,14 +169,55 @@ module.exports = (db) => {
     );
   });
 
-  // PUT /productos/:id — actualizar un producto (solo admin)
+  /**
+   * @swagger
+   * /productos/{id}:
+   *   put:
+   *     summary: Actualizar un producto (solo admin)
+   *     tags: [Productos]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID del producto a actualizar
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               nombre:
+   *                 type: string
+   *               referencia:
+   *                 type: string
+   *               descripcion:
+   *                 type: string
+   *               precio:
+   *                 type: number
+   *               stock:
+   *                 type: integer
+   *               imagen_url:
+   *                 type: string
+   *               id_categoria:
+   *                 type: integer
+   *               activo:
+   *                 type: boolean
+   *     responses:
+   *       200:
+   *         description: Producto actualizado exitosamente
+   *       500:
+   *         description: Error del servidor
+   */
   router.put('/:id', (req, res) => {
     const { id } = req.params;
     const { nombre, referencia, descripcion, precio, stock, imagen_url, id_categoria, activo } = req.body;
     db.query(
       'UPDATE PRODUCTO SET nombre=?, referencia=?, descripcion=?, precio=?, stock=?, imagen_url=?, id_categoria=?, activo=? WHERE id_producto=?',
       [nombre, referencia, descripcion, precio, stock, imagen_url, id_categoria, activo, id],
-      (err, results) => {
+      (err) => {
         if (err) {
           return res.status(500).json({ error: 'Error al actualizar producto', detalle: err.message });
         }
