@@ -60,6 +60,12 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// Ruta explícita para el JSON del spec
+app.get('/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerDocs);
+});
+
 // Rutas
 const categoriasRouter = require('./routes/categorias')(db);
 const productosRouter = require('./routes/productos')(db);
